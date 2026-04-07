@@ -10,7 +10,7 @@ import {
   NavigationMenu,
   SEO,
 } from '../components';
-import { getNextStaticProps } from '@faustwp/core';
+import { getNextServerSideProps } from '@faustwp/core';
 
 export default function Page(props) {
   const { data } = useQuery(Page.query, {
@@ -74,6 +74,9 @@ Page.variables = () => {
   };
 };
 
-export function getStaticProps(ctx) {
-  return getNextStaticProps(ctx, {Page, props: {title: 'File Page Example'}});
+export async function getServerSideProps(ctx) {
+  return getNextServerSideProps(ctx, {
+    Page,
+    props: { title: 'File Page Example' },
+  });
 }

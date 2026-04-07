@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { getNextStaticProps } from '@faustwp/core';
+import { getNextServerSideProps } from '@faustwp/core';
 import * as MENUS from '../constants/menus';
 import { BlogInfoFragment } from '../fragments/GeneralSettings';
 import { NavigationMenuItemFragment } from '../fragments/MenuAndImage';
@@ -78,9 +78,8 @@ ServicesPage.variables = (context, extra) => ({
   footerLocation: MENUS.FOOTER_LOCATION,
 });
 
-export async function getStaticProps(context) {
-  return getNextStaticProps(context, {
+export async function getServerSideProps(context) {
+  return getNextServerSideProps(context, {
     Page: ServicesPage,
-    revalidate: 60,
   });
 }
