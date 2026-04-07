@@ -12,7 +12,8 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.vercel
-frontend/.env*
+frontend/.env.local
+frontend/.env.*.local
 frontend/*.tsbuildinfo
 
 # WordPress local / sensitive (adjust if you intentionally version these)
