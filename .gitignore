@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.vercel
+frontend/.env*
+frontend/*.tsbuildinfo
+
+# WordPress local / sensitive (adjust if you intentionally version these)
+app/sql/*.sql
+
+# Editor
+.idea/
+.vscode/
