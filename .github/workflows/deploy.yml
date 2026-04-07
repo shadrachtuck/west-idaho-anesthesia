@@ -1,0 +1,56 @@
+# Deploy Next.js (Faust) frontend to DigitalOcean over SSH.
+#
+# Required GitHub Actions *secrets* (Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST       — droplet hostname or IP (e.g. 64.23.192.136)
+#   DEPLOY_USER       — SSH user (e.g. root)
+#   DEPLOY_SSH_KEY    — private key (full PEM) whose public key is in ~/.ssh/authorized_keys on the server
+#   FAUST_SECRET_KEY  — must match WordPress → Faust plugin settings
+#
+# Optional repository *variable* DEPLOY_PATH — absolute path to the repo on the server (default below).
+
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          FAUST_SECRET_KEY: ${{ secrets.FAUST_SECRET_KEY }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          command_timeout: 40m
+          envs: FAUST_SECRET_KEY
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
+            if [ -z "$DEPLOY_PATH" ]; then
+              DEPLOY_PATH="/var/www/west-idaho-anesthesia"
+            fi
+            cd "$DEPLOY_PATH"
+            git fetch origin main
+            git checkout -B main origin/main
+            printf '%s\n' "FAUST_SECRET_KEY=${FAUST_SECRET_KEY}" > frontend/.env.local
+            cd frontend
+            npm ci
+            npm run build -- --skip-health-checks
+            pm2 delete wia-frontend 2>/dev/null || true
+            pm2 start npm --name wia-frontend -- start
+            pm2 save
