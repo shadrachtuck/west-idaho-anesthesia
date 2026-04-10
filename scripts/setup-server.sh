@@ -15,6 +15,8 @@
 #   WP_DB_PASS       if unset, a random password is generated and printed once
 #   FRONTEND_ROOT    path to git clone with frontend/ (default: /var/www/west-idaho-anesthesia)
 #   INSTALL_WP_CLI   set to 1 to install wp-cli.phar to /usr/local/bin/wp
+#   CREATE_SWAP      set to 0 to skip; default 1 — on hosts with <2GiB RAM, create 2G /swapfile
+#                    if none active (avoids OOM killer during npm ci / Next build on small droplets)
 
 set -euo pipefail
 
@@ -30,6 +32,25 @@ if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
 fi
 
 export DEBIAN_FRONTEND=noninteractive
+
+CREATE_SWAP="${CREATE_SWAP:-1}"
+if [[ "$CREATE_SWAP" == "1" ]]; then
+  echo "==> Swap (low-RAM droplets — reduces OOM during npm ci / Node builds)"
+  MEM_KB="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
+  if [[ "${MEM_KB:-0}" -lt 2097152 ]] && ! swapon --show 2>/dev/null | grep -q '/swapfile'; then
+    if [[ ! -f /swapfile ]]; then
+      echo "Creating 2G /swapfile (MemTotal=${MEM_KB}kB)"
+      fallocate -l 2G /swapfile 2>/dev/null || dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
+      chmod 600 /swapfile
+      mkswap /swapfile
+    fi
+    swapon /swapfile
+    grep -q '^/swapfile' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+    sysctl -w vm.swappiness=60 >/dev/null || true
+  else
+    echo "(swap skipped: MemTotal>=2GiB or /swapfile already active)"
+  fi
+fi
 
 echo "==> apt update / install base packages"
 apt-get update -qq
