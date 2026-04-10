@@ -6,7 +6,10 @@
 #   DEPLOY_SSH_KEY    — private key (full PEM) whose public key is in ~/.ssh/authorized_keys on the server
 #   FAUST_SECRET_KEY  — must match WordPress → Faust plugin settings
 #
-# Optional repository *variable* DEPLOY_PATH — absolute path to the repo on the server (default below).
+# Optional repository *variables*:
+#   DEPLOY_PATH — absolute path to the repo on the server (default below).
+#   NEXT_PUBLIC_WORDPRESS_URL — WordPress base URL (e.g. http://64.23.192.136), must differ from
+#     Faust frontend_uri in WP (typically http://HOST:8080). Required for `faust start` / PM2.
 
 name: Deploy frontend
 
@@ -31,26 +34,34 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           FAUST_SECRET_KEY: ${{ secrets.FAUST_SECRET_KEY }}
+          NEXT_PUBLIC_WORDPRESS_URL: ${{ vars.NEXT_PUBLIC_WORDPRESS_URL }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
           command_timeout: 40m
-          envs: FAUST_SECRET_KEY
+          envs: FAUST_SECRET_KEY,NEXT_PUBLIC_WORDPRESS_URL
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
             if [ -z "$DEPLOY_PATH" ]; then
               DEPLOY_PATH="/var/www/west-idaho-anesthesia"
             fi
+            if [ -z "${NEXT_PUBLIC_WORDPRESS_URL:-}" ]; then
+              echo "Set repository variable NEXT_PUBLIC_WORDPRESS_URL to your WordPress URL (e.g. http://YOUR_IP), not the :8080 Next URL." >&2
+              exit 1
+            fi
             cd "$DEPLOY_PATH"
             git fetch origin main
             git checkout -B main origin/main
-            printf '%s\n' "FAUST_SECRET_KEY=${FAUST_SECRET_KEY}" > frontend/.env.local
+            {
+              printf '%s\n' "FAUST_SECRET_KEY=${FAUST_SECRET_KEY}"
+              printf '%s\n' "NEXT_PUBLIC_WORDPRESS_URL=${NEXT_PUBLIC_WORDPRESS_URL}"
+            } > frontend/.env.local
             cd frontend
             npm ci
             npm run build -- --skip-health-checks
             pm2 delete wia-frontend 2>/dev/null || true
-            pm2 start npm --name wia-frontend -- start
+            pm2 start npm --name wia-frontend --cwd "$DEPLOY_PATH/frontend" -- start
             pm2 save

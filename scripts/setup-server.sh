@@ -8,7 +8,8 @@
 #   curl -fsSL ... | bash   OR   bash scripts/setup-server.sh
 #
 # Optional environment:
-#   WP_ROOT          WordPress files (default: /var/www/wordpress)
+#   WP_ROOT          WordPress docroot (default: /var/www/wordpress). For this repo use
+#                    .../west-idaho-anesthesia/app/public so port 80 can proxy to Next.
 #   WP_DB_NAME       (default: wordpress)
 #   WP_DB_USER       (default: wordpress)
 #   WP_DB_PASS       if unset, a random password is generated and printed once
@@ -92,10 +93,11 @@ GRANT ALL PRIVILEGES ON \`${WP_DB_NAME}\`.* TO '${WP_DB_USER}'@'localhost';
 FLUSH PRIVILEGES;
 SQL
 
-echo "==> nginx: WordPress site (port 80)"
+echo "==> nginx: port 80 — Next.js (Faust) for / ; WordPress for admin, REST, GraphQL, assets"
 install -d /etc/nginx/sites-available /etc/nginx/sites-enabled
 cat > /etc/nginx/sites-available/west-idaho-wordpress <<NGINX
-# WordPress — PHP. GraphQL for Faust: ${WP_ROOT}/index.php?graphql (via WPGraphQL plugin)
+# Public site is the Faust app (PM2 :3000). WordPress serves /wp-json, /graphql, /wp-admin, etc.
+# Set WP_ROOT to your WordPress docroot (this repo: .../app/public).
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -106,17 +108,47 @@ server {
 
     client_max_body_size 64M;
 
-    location / {
-        try_files \$uri \$uri/ /index.php?\$args;
+    # Block PHP inside uploads before the general .php handler.
+    location ~* /(?:uploads|files)/.*\\.php\$ {
+        deny all;
     }
 
+    # Do NOT use ^~ on wp-* blocks — ^~ skips regex locations, so .php would be served as
+    # static files (application/octet-stream) instead of executed.
     location ~ \\.php\$ {
         include fastcgi.conf;
         fastcgi_pass unix:${PHP_SOCK};
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
 
-    location ~* /(?:uploads|files)/.*\\.php\$ {
-        deny all;
+    location /wp-admin {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+    location /wp-json/ {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+    location = /graphql {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+    # Do not add location = /wp-login.php (etc.) with try_files — an existing file would be
+    # served as static. Let location ~ \\.php\$ handle *.php.
+    location /wp-content/ {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+    location /wp-includes/ {
+        try_files \$uri \$uri/ /index.php?\$args;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
     }
 }
 NGINX
@@ -165,8 +197,9 @@ echo "MySQL database:      $WP_DB_NAME / user $WP_DB_USER"
 echo "Frontend repo path:  $FRONTEND_ROOT"
 echo ""
 echo "Public URLs (IP-only):"
-echo "  WordPress (CMS):    http://YOUR_IP/           (port 80)"
-echo "  Next.js (Faust):    http://YOUR_IP:8080/      (nginx → PM2 :3000)  OR  http://YOUR_IP:3000/  direct"
+echo "  Faust (primary):    http://YOUR_IP/           (port 80 → PM2 :3000; WordPress at /wp-json, /graphql, …)"
+echo "  Faust (alternate):  http://YOUR_IP:8080/      (same app; nginx → PM2 :3000)"
+echo "  WordPress admin:    http://YOUR_IP/wp-admin/"
 echo ""
 echo "Set NEXT_PUBLIC_WORDPRESS_URL in frontend/.env.production to match how browsers/Node reach WP,"
 echo "e.g. http://127.0.0.1 if WP and Next run on the same droplet (SSR to GraphQL)."

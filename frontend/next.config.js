@@ -23,7 +23,6 @@ module.exports = withFaust({
   },
   async redirects() {
     return [
-      { source: '/shop', destination: '/online-bill-pay', permanent: false },
       { source: '/about', destination: '/services', permanent: false },
     ];
   },

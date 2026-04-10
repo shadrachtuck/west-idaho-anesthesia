@@ -1,90 +1,66 @@
-# ACF Setup Guide for Mowby Wines Website
+# ACF setup — West Idaho Anesthesia
 
-This guide will help you set up Advanced Custom Fields (ACF) in WordPress for the Mowby Wines headless website.
+This guide covers **Advanced Custom Fields Pro (ACF)** and GraphQL for the West Idaho Anesthesia headless WordPress + Next.js site.
 
 ## Prerequisites
 
-1. Install and activate these WordPress plugins:
-   - **Advanced Custom Fields** (ACF)
+1. Install and activate:
+
+   - **Advanced Custom Fields Pro**
    - **WPGraphQL**
-   - **WPGraphQL for Advanced Custom Fields** (download from GitHub: https://github.com/wp-graphql/wp-graphql-acf)
+   - **WPGraphQL for Advanced Custom Fields** — [wp-graphql/wp-graphql-acf](https://github.com/wp-graphql/wp-graphql-acf)
 
-2. In WordPress Admin, go to `GraphQL > Settings` and enable:
-   - ✅ Enable GraphQL Debug Mode
-   - ✅ Enable Public Introspection
+2. In WordPress Admin, open **GraphQL → Settings** and enable:
 
-## Step 1: Create "Wines" Custom Post Type (Optional)
+   - **Enable GraphQL Debug Mode** (useful while developing)
+   - **Enable Public Introspection** (needed for schema tools and Faust `generate`)
 
-If you want to manage wines as a custom post type:
+## Optional: custom post types
 
-1. In WordPress Admin, go to `ACF > Post Types`
-2. Click "Add New"
-3. Configure as follows:
+Use **ACF → Post Types** only if content is easier to model as a CPT than as pages. Examples:
 
-### Post Type Settings:
-- **Post Type Key**: `wine`
-- **Plural Label**: `Wines`
-- **Singular Label**: `Wine`
-- **Supports**: Title, Editor, Featured Image, Custom Fields
-- **Public**: ✅ Yes
-- **Show in GraphQL**: ✅ Yes
+| Idea | Post type key | Show in GraphQL |
+|------|----------------|-----------------|
+| Team members | `team_member` | Yes |
+| Office / location | `location` | Yes |
 
-4. Click "Publish"
+For each CPT, add an ACF field group with **Show in GraphQL** enabled and a stable **GraphQL Field Name** (e.g. `teamMemberFields`).
 
-## Step 2: Create ACF Field Group for Wines (Optional)
+## Optional: field groups on pages
 
-1. In WordPress Admin, go to `Custom Fields > Field Groups`
-2. Click "Add New"
-3. Name the field group: "Wine Fields"
+1. Go to **Custom Fields → Field Groups → Add New**.
+2. Set **Location** to the templates you need (e.g. **Page Template** or **Page** with a specific slug).
+3. Add fields (text, WYSIWYG, repeater for hero slides, etc.).
+4. Enable **Show in GraphQL** and set field names that are safe for GraphQL.
 
-### Add fields for wine products:
-- **Varietal** (Text)
-- **Vintage** (Number or Text)
-- **Description** (Textarea)
-- **Tasting Notes** (Textarea)
-- **Bottle Image** (Image)
+## Content: pages and posts
 
-### GraphQL Settings:
-- Enable "Show in GraphQL": ✅ Yes
-- **GraphQL Field Name**: `wineFields`
+- Set **Settings → Reading** so the desired page is the **homepage** (matches Faust `front-page` template).
+- Create or edit pages for content that should be managed in WordPress (e.g. service copy, policy pages).
+- Use **Posts** for news or blog content if the site exposes a blog.
 
-4. Click "Publish"
+## Faust (Headless)
 
-## Step 3: Create Pages
+- **Settings → Headless**: set **Front-end site URL** to your Next URL (local: `http://localhost:3000`; production: your public Faust URL).
+- Copy the **Secret Key** into `FAUST_SECRET_KEY` in `frontend/.env.local` (and CI secrets).
 
-1. **About Page**: `Pages > Add New`
-   - Title: "About"
-   - Slug: "about"
-   - Add winemaker and First Crush story content
-   - Publish
+## Verify GraphQL
 
-2. **Contact Page** (optional - frontend has its own contact form)
-
-3. **Blog** - Use WordPress Posts for blog content
-
-## Step 4: Verify GraphQL Schema
-
-1. Go to `GraphQL > GraphiQL IDE` in WordPress Admin
-2. Run test query for pages:
+1. Open **GraphQL → GraphiQL IDE** in wp-admin.
+2. Run a simple query:
 
 ```graphql
 query TestPages {
-  page(id: "about", idType: SLUG) {
+  generalSettings {
     title
-    content
   }
 }
 ```
 
-If you see results, the setup is working correctly!
+3. If you added ACF fields with GraphQL enabled, introspect or query them by the names shown in the schema.
 
 ## Troubleshooting
 
-### If GraphQL query doesn't return ACF fields:
-1. Check that "WPGraphQL for Advanced Custom Fields" plugin is active
-2. Verify the field group's GraphQL settings
-3. Clear any caching plugins
-
-### If pages don't appear:
-1. Verify pages are published
-2. Check slug matches query (e.g., "about")
+- **ACF fields missing in GraphQL** — Confirm **WPGraphQL for ACF** is active; check each field group’s GraphQL settings; clear caches.
+- **Empty or wrong page** — Confirm the page is published and slugs/URIs match what the frontend queries.
+- **Faust preview/auth issues** — Confirm `FAUST_SECRET_KEY` matches WordPress and `NEXT_PUBLIC_WORDPRESS_URL` is the WordPress base URL the server can reach.

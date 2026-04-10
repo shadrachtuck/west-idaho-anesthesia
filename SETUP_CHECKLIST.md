@@ -1,116 +1,77 @@
-# Mowby Wines Setup Checklist
+# Setup checklist — West Idaho Anesthesia
 
-Use this checklist to ensure everything is set up correctly.
+Use this checklist to verify WordPress, GraphQL, Faust, and the Next.js frontend.
 
-## WordPress Setup
+## WordPress
 
-### Plugins Installation
-- [ ] Install and activate **Advanced Custom Fields (ACF)**
-- [ ] Install and activate **WPGraphQL**
-- [ ] Install and activate **WPGraphQL for Advanced Custom Fields** (from GitHub)
-- [ ] (Optional) Install and activate **Faust** plugin
+### Plugins
 
-### GraphQL Configuration
-- [ ] Go to `GraphQL > Settings` in WordPress Admin
-- [ ] Enable "Enable GraphQL Debug Mode"
-- [ ] Enable "Enable Public Introspection"
-- [ ] Click "Save Changes"
+- [ ] **Advanced Custom Fields Pro** installed and activated  
+- [ ] **WPGraphQL** installed and activated  
+- [ ] **WPGraphQL for Advanced Custom Fields** installed and activated  
+- [ ] **FaustWP** (Headless) installed and activated  
 
-### Custom Post Type Setup (Optional - for Wine Products)
-- [ ] Go to `ACF > Post Types`
-- [ ] Create new post type: "Wines"
-  - Post Type Key: `wine`
-  - Plural Label: `Wines`
-  - Singular Label: `Wine`
-  - Show in GraphQL: ✅ Yes
-  - Supports: Title, Editor, Featured Image, Custom Fields
+### GraphQL
 
-### ACF Field Group Setup (for Wines, if using)
-- [ ] Create field group: "Wine Fields"
-- [ ] Set location rule: `Post Type` is equal to `Wine`
-- [ ] Add fields for wine details (varietal, vintage, description, etc.)
-- [ ] Enable "Show in GraphQL" with field name `wineFields`
+- [ ] **GraphQL → Settings**: enable **GraphQL Debug Mode** (while developing)  
+- [ ] **GraphQL → Settings**: enable **Public Introspection**  
+- [ ] Save changes  
 
-### Content Setup
-- [ ] Create "About" page in `Pages > Add New`
-  - Title: "About"
-  - Slug: "about"
-  - Add winemaker story and First Crush content
-  - Publish
-- [ ] Create "Shop" page (or rely on frontend `/shop` route)
-- [ ] Create "Contact" page
-- [ ] Create "Blog" page or use Posts for blog content
+### Headless (Faust)
 
-### Faust Configuration (if using Faust plugin)
-- [ ] Go to `Settings > Headless`
-- [ ] Set "Front-end site URL" to `http://localhost:3000`
-- [ ] Copy the "Secret Key"
-- [ ] Note your WordPress site URL
+- [ ] **Settings → Headless**: **Front-end site URL** = your Next URL (`http://localhost:3000` locally, or production URL including port if applicable)  
+- [ ] Copy **Secret Key** for `FAUST_SECRET_KEY`  
+- [ ] Note the **WordPress site URL** for `NEXT_PUBLIC_WORDPRESS_URL`  
 
-## Frontend Setup
+### Content (adjust to your IA)
 
-### Environment Configuration
-- [ ] Navigate to `frontend/` directory
-- [ ] Copy `.env.local.sample` to `.env.local`
-- [ ] Edit `.env.local`:
-  - [ ] Set `NEXT_PUBLIC_WORDPRESS_URL` to your WordPress URL
-  - [ ] Set `FAUST_SECRET_KEY` to the key from WordPress Settings > Headless
+- [ ] **Settings → Reading**: front page assigned as needed for the Faust `front-page` template  
+- [ ] Core pages published in WordPress if they back CMS-driven routes  
+- [ ] Blog: posts published if `/blog` or archives are used  
 
-### Install Dependencies
-- [ ] Run `npm install` in the `frontend/` directory
-- [ ] Verify no errors
+## Frontend (`frontend/`)
 
-### Generate GraphQL Types
-- [ ] Run `npm run generate` to generate possible types
-- [ ] Verify `possibleTypes.json` is updated
+### Environment
 
-### Test Development Server
-- [ ] Run `npm run dev`
-- [ ] Visit `http://localhost:3000`
-- [ ] Verify homepage loads with wine bottle animation
-- [ ] Test `/about` page
-- [ ] Test `/shop` page - reservation form
-- [ ] Test `/contact` page
-- [ ] Test `/blog` page
+- [ ] Create **`frontend/.env.local`** with:  
+  - [ ] `NEXT_PUBLIC_WORDPRESS_URL` = WordPress base URL (no trailing path)  
+  - [ ] `FAUST_SECRET_KEY` = secret from **Settings → Headless**  
+- [ ] Optional: align **`frontend/.env.development`** / **`.env.production`** with the same variable rules for each environment  
 
-## Verification Checklist
+### Install and generate
 
-### Homepage
-- [ ] Wine bottle animation and hero display
-- [ ] "Reserve a Bottle" / Shop link works
-- [ ] Links to About, Shop, Contact, Blog work
+- [ ] `npm install` completes without errors  
+- [ ] `npm run generate` updates **`possibleTypes.json`**  
 
-### About Page (`/about`)
-- [ ] Page displays content from WordPress "About" page or static content
+### Local run
 
-### Shop Page (`/shop`)
-- [ ] Reservation form displays
-- [ ] Form submission works (localStorage for demo)
+- [ ] `npm run dev` starts Faust/Next  
+- [ ] Open **http://localhost:3000** — homepage loads  
+- [ ] Spot-check: `/services`, `/meet-the-team`, `/contact`, `/blog`, `/patient-portal`, `/online-bill-pay` as applicable  
+- [ ] WordPress-driven URLs resolve via **`[...wordpressNode]`** where used  
+- [ ] **`/preview`** works for draft preview if configured  
 
-### Contact Page (`/contact`)
-- [ ] Contact form displays
-- [ ] Form submission works
+## Verification
 
-### Blog Page (`/blog`)
-- [ ] Wine journal / blog posts display
+### UI and navigation
 
-### Navigation
-- [ ] Header navigation works (Home, About, Shop, Blog, Contact)
-- [ ] Footer navigation works
-- [ ] All internal links work
+- [ ] Header and footer links match the live information architecture  
+- [ ] Mobile layout is acceptable on key pages  
+
+### Data
+
+- [ ] GraphQL queries return expected content (use GraphiQL for complex cases)  
+- [ ] Images from WordPress load (hostname allowed in **`next.config.js`** via Faust `getWpHostname()`)  
+
+### Production / server (if applicable)
+
+- [ ] **`NEXT_PUBLIC_WORDPRESS_URL`** on the server points at WordPress (often port **80** / HTTPS), not only at the Next port  
+- [ ] PM2 (or your process manager) runs **`faust start`** / `npm start` from `frontend/`  
+- [ ] GitHub Actions secrets/vars match **[README.md](./README.md)** deploy section  
 
 ## Troubleshooting
 
-1. **GraphQL errors**
-   - Verify WPGraphQL for ACF plugin is active
-   - Check field group GraphQL settings
-   - Clear any caching
-
-2. **Frontend not connecting to WordPress**
-   - Verify `.env.local` has correct WordPress URL
-   - Check WordPress URL is accessible
-   - Verify Faust secret key is correct
-
-3. **Pages not loading**
-   - Check Next.js/Faust routing
-   - Verify pages exist in WordPress for dynamic content
+1. **GraphQL errors** — Plugins active; introspection on; ACF field groups expose fields to GraphQL; clear caches.  
+2. **Frontend cannot reach WordPress** — URL in `.env.local`, firewall, and TLS match how Node resolves the host.  
+3. **Faust secret mismatch** — Regenerate or re-copy key in WordPress and redeploy env.  
+4. **Wrong template** — WordPress **Settings → Reading** and Faust `wp-templates` mapping for `front-page` / `page` / `single`.  
