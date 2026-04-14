@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "scripts": {
     "postinstall": "patch-package",
-    "dev": "faust dev",
-    "build": "faust build",
+    "dev": "NODE_ENV=development faust dev",
+    "build": "NODE_ENV=production faust build",
     "generate": "faust generatePossibleTypes",
     "stylesheet": "faust generateGlobalStylesheet",
-    "start": "faust start"
+    "start": "NODE_ENV=production faust start"
   },
   "dependencies": {
     "@apollo/client": "3.13.9",

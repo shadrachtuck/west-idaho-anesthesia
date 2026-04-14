@@ -76,9 +76,6 @@ jobs:
               printf '%s\n' "NEXT_PUBLIC_WORDPRESS_URL=${NEXT_PUBLIC_WORDPRESS_URL}"
             } > frontend/.env.local
             cd frontend
-            # #region agent log
-            echo "{\"sessionId\":\"f170bc\",\"hypothesisId\":\"H1\",\"location\":\"deploy.yml:pre-npm-ci\",\"message\":\"memory\",\"data\":{\"mem_total_kb\":$(awk '/^MemTotal:/ {print $2}' /proc/meminfo),\"mem_avail_kb\":$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo),\"swap_lines\":$(swapon --show 2>/dev/null | wc -l | tr -d ' ')},\"timestamp\":$(date +%s)000}" >&2
-            # #endregion
             export NPM_CONFIG_MAXSOCKETS=5
             npm ci --no-audit --no-fund
             npm run build -- --skip-health-checks

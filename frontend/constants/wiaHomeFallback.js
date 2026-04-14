@@ -59,6 +59,32 @@ export function parseProviderList(text) {
     .filter(Boolean);
 }
 
+/**
+ * Team rows for homepage / Meet the Team: repeater from ACF when present, else plain list (no images).
+ * @param {object} w - wiaHomeFields from GraphQL
+ * @param {string} fallbackListText - newline-separated names (e.g. WIA_HOME_FALLBACK.teamProvidersList)
+ * @returns {{ name: string; image: object | null }[]}
+ */
+export function getTeamProviderRows(w, fallbackListText) {
+  const rows = w?.teamProviders;
+  if (Array.isArray(rows) && rows.length > 0) {
+    return rows
+      .map((row) => {
+        const name = row?.providerName != null ? String(row.providerName).trim() : '';
+        const image = row?.providerPhoto?.node ?? null;
+        if (!name) {
+          return null;
+        }
+        return { name, image };
+      })
+      .filter(Boolean);
+  }
+  return parseProviderList(w?.teamProvidersList || fallbackListText).map((name) => ({
+    name,
+    image: null,
+  }));
+}
+
 /** Build tel: href from a display phone string (US-friendly). */
 export function telHrefFromPhone(phone) {
   if (!phone || typeof phone !== 'string') {

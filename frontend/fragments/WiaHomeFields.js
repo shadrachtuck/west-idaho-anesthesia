@@ -33,6 +33,39 @@ export const WiaHomeFieldsFragment = gql`
       givesBackText
       simulationHeading
       simulationText
+      featuredProviders {
+        node {
+          sourceUrl
+          altText
+          mediaDetails {
+            width
+            height
+          }
+        }
+      }
+      givesBackImage {
+        node {
+          sourceUrl
+          altText
+          mediaDetails {
+            width
+            height
+          }
+        }
+      }
+      teamProviders {
+        providerName
+        providerPhoto {
+          node {
+            sourceUrl
+            altText
+            mediaDetails {
+              width
+              height
+            }
+          }
+        }
+      }
       teamProvidersList
       teamSectionHeading
       contactAddressLine1

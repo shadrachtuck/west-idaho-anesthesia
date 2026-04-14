@@ -53,16 +53,16 @@ export default function SiteNavigation() {
           </div>
         </div>
 
-        {/* md+: spacer left (logo is absolute on SiteHeader); nav center; bill pay right */}
-        <div className="relative hidden md:flex h-[72px] items-center">
-          <div className="flex min-w-0 flex-1 items-center justify-start z-10" />
+        {/* md+: 1fr : 4fr : 1fr — logo zone | nav | bill pay (logo overlays first column from SiteHeader) */}
+        <div className="relative hidden md:grid md:grid-cols-[1fr_4fr_1fr] md:h-[72px] md:items-center md:gap-3 lg:gap-6">
+          <div className="min-w-0 z-10" aria-hidden />
 
-          <div className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
-            <div className="flex items-center gap-0.5 xl:gap-1">
+          <div className="flex min-w-0 items-center justify-center self-stretch z-10">
+            <div className="inline-flex max-w-full min-w-0 flex-nowrap items-center justify-center gap-x-1 lg:gap-x-1.5 xl:gap-x-2">
               {navItems.map((item) => (
-                <Link key={item.path} href={item.path}>
+                <Link key={item.path} href={item.path} className="shrink-0">
                   <span
-                    className={`text-[11px] xl:text-xs font-sans font-medium uppercase tracking-wide transition-colors inline-flex items-center px-2.5 py-2 rounded-[10px] ${
+                    className={`text-[11px] xl:text-xs font-sans font-medium uppercase tracking-wide transition-colors inline-flex items-center px-2 py-2 rounded-[10px] lg:px-2.5 ${
                       isActive(item.path)
                         ? 'bg-wia-nav-pill text-wia-navy'
                         : 'text-wia-body hover:text-wia-red'
@@ -75,10 +75,10 @@ export default function SiteNavigation() {
             </div>
           </div>
 
-          <div className="flex flex-1 justify-end items-center gap-3 z-10">
+          <div className="flex min-w-0 items-center justify-center z-10">
             <Button
               asChild
-              className="rounded-[10px] px-4 xl:px-5 font-sans text-xs xl:text-sm font-semibold uppercase tracking-wide"
+              className="rounded-[10px] px-4 xl:px-5 font-sans text-xs xl:text-sm font-semibold uppercase tracking-wide whitespace-nowrap"
             >
               <Link href="/online-bill-pay">Online Bill Pay</Link>
             </Button>
