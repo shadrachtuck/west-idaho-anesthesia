@@ -80,5 +80,7 @@ jobs:
             npm ci --no-audit --no-fund
             npm run build -- --skip-health-checks
             pm2 delete wia-frontend 2>/dev/null || true
-            pm2 start npm --name wia-frontend --cwd "$DEPLOY_PATH/frontend" -- start
+            # Match `faust build --skip-health-checks`: `faust start` otherwise exits before
+            # `next start` if GraphQL/secret checks fail — nginx then gets connection refused → 502.
+            pm2 start npm --name wia-frontend --cwd "$DEPLOY_PATH/frontend" -- start -- --skip-health-checks
             pm2 save
