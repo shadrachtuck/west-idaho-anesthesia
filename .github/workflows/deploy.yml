@@ -10,6 +10,8 @@
 #   NEXT_PUBLIC_WORDPRESS_URL — WordPress base URL (e.g. http://YOUR_IP), not the :8080 Next URL.
 # Optional repository *variables*:
 #   DEPLOY_PATH — absolute path to the repo on the server (default below).
+#   WP_CONFIG_PATH — if WordPress wp-config.php is not at $DEPLOY_PATH/app/public/wp-config.php,
+#                    set this to its absolute path on the server (backup/restore uses it).
 #
 # If npm ci exits 137 / "Killed": the droplet likely ran out of RAM (OOM). This workflow
 # enables a 2G swapfile when running as root on <2GiB RAM (idempotent). Or run scripts/setup-server.sh
@@ -23,6 +25,8 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy.yml'
+      - '.gitignore'
+      - 'app/**'
   workflow_dispatch:
 
 concurrency:
@@ -39,13 +43,14 @@ jobs:
         env:
           FAUST_SECRET_KEY: ${{ secrets.FAUST_SECRET_KEY }}
           NEXT_PUBLIC_WORDPRESS_URL: ${{ vars.NEXT_PUBLIC_WORDPRESS_URL }}
+          WP_CONFIG_PATH: ${{ vars.WP_CONFIG_PATH }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
           command_timeout: 40m
-          envs: FAUST_SECRET_KEY,NEXT_PUBLIC_WORDPRESS_URL
+          envs: FAUST_SECRET_KEY,NEXT_PUBLIC_WORDPRESS_URL,WP_CONFIG_PATH
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
@@ -68,16 +73,29 @@ jobs:
                 grep -q '^/swapfile' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
               fi
             fi
-            WPCONF="${DEPLOY_PATH}/app/public/wp-config.php"
+            if [ -n "${WP_CONFIG_PATH:-}" ]; then
+              WPCONF="$WP_CONFIG_PATH"
+            else
+              WPCONF="${DEPLOY_PATH}/app/public/wp-config.php"
+            fi
+            WPCONF_BAK="$(mktemp /tmp/wia-wp-config.XXXXXX)"
+            HAD_WPCONF=0
             if [ -f "$WPCONF" ]; then
-              cp "$WPCONF" /tmp/wia-wp-config.bak
+              HAD_WPCONF=1
+              cp -a "$WPCONF" "$WPCONF_BAK"
             fi
             cd "$DEPLOY_PATH"
             git fetch origin main
             git checkout -B main origin/main
-            if [ -f /tmp/wia-wp-config.bak ]; then
-              cp /tmp/wia-wp-config.bak "$WPCONF"
-              rm -f /tmp/wia-wp-config.bak
+            if [ "$HAD_WPCONF" -eq 1 ]; then
+              cp -a "$WPCONF_BAK" "$WPCONF"
+              rm -f "$WPCONF_BAK"
+              if ! grep -q 'DB_NAME' "$WPCONF"; then
+                echo "Restored wp-config.php at $WPCONF does not look valid (missing DB_NAME)." >&2
+                exit 1
+              fi
+            else
+              rm -f "$WPCONF_BAK"
             fi
             {
               printf '%s\n' "FAUST_SECRET_KEY=${FAUST_SECRET_KEY}"
