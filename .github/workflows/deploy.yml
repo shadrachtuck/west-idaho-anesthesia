@@ -12,6 +12,10 @@
 #   DEPLOY_PATH — absolute path to the repo on the server (default below).
 #   WP_CONFIG_PATH — if WordPress wp-config.php is not at $DEPLOY_PATH/app/public/wp-config.php,
 #                    set this to its absolute path on the server (backup/restore uses it).
+#   WP_CONFIG_CANONICAL — optional absolute path on the droplet to the real wp-config.php (e.g.
+#       /etc/west-idaho/wp-config.php). If that file exists, it is copied over after git checkout
+#       and always wins (Git cannot overwrite production DB credentials). If unset, the same path
+#       is used when present: /etc/west-idaho/wp-config.php
 #
 # If npm ci exits 137 / "Killed": the droplet likely ran out of RAM (OOM). This workflow
 # enables a 2G swapfile when running as root on <2GiB RAM (idempotent). Or run scripts/setup-server.sh
@@ -44,13 +48,14 @@ jobs:
           FAUST_SECRET_KEY: ${{ secrets.FAUST_SECRET_KEY }}
           NEXT_PUBLIC_WORDPRESS_URL: ${{ vars.NEXT_PUBLIC_WORDPRESS_URL }}
           WP_CONFIG_PATH: ${{ vars.WP_CONFIG_PATH }}
+          WP_CONFIG_CANONICAL: ${{ vars.WP_CONFIG_CANONICAL }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
           command_timeout: 40m
-          envs: FAUST_SECRET_KEY,NEXT_PUBLIC_WORDPRESS_URL,WP_CONFIG_PATH
+          envs: FAUST_SECRET_KEY,NEXT_PUBLIC_WORDPRESS_URL,WP_CONFIG_PATH,WP_CONFIG_CANONICAL
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ vars.DEPLOY_PATH }}"
@@ -87,7 +92,19 @@ jobs:
             cd "$DEPLOY_PATH"
             git fetch origin main
             git checkout -B main origin/main
-            if [ "$HAD_WPCONF" -eq 1 ]; then
+            CANONICAL="${WP_CONFIG_CANONICAL:-}"
+            if [ -z "$CANONICAL" ] && [ -f /etc/west-idaho/wp-config.php ]; then
+              CANONICAL=/etc/west-idaho/wp-config.php
+            fi
+            if [ -n "$CANONICAL" ] && [ -f "$CANONICAL" ]; then
+              mkdir -p "$(dirname "$WPCONF")"
+              cp -a "$CANONICAL" "$WPCONF"
+              rm -f "$WPCONF_BAK"
+              if ! grep -q 'DB_NAME' "$WPCONF"; then
+                echo "Canonical wp-config at $CANONICAL did not produce a valid $WPCONF (missing DB_NAME)." >&2
+                exit 1
+              fi
+            elif [ "$HAD_WPCONF" -eq 1 ]; then
               cp -a "$WPCONF_BAK" "$WPCONF"
               rm -f "$WPCONF_BAK"
               if ! grep -q 'DB_NAME' "$WPCONF"; then
