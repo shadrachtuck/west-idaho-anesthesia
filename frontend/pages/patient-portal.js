@@ -44,9 +44,6 @@ export default function PatientPortalPage(props) {
                   <Link href="/online-bill-pay">Online Bill Pay</Link>
                 </Button>
               </div>
-              <p className="mt-8 text-sm text-gray-500 font-sans">
-                Replace this placeholder with your live patient portal URL when your vendor provides it.
-              </p>
             </motion.div>
           </div>
         </div>
