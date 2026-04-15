@@ -68,9 +68,17 @@ jobs:
                 grep -q '^/swapfile' /etc/fstab 2>/dev/null || echo '/swapfile none swap sw 0 0' >> /etc/fstab
               fi
             fi
+            WPCONF="${DEPLOY_PATH}/app/public/wp-config.php"
+            if [ -f "$WPCONF" ]; then
+              cp "$WPCONF" /tmp/wia-wp-config.bak
+            fi
             cd "$DEPLOY_PATH"
             git fetch origin main
             git checkout -B main origin/main
+            if [ -f /tmp/wia-wp-config.bak ]; then
+              cp /tmp/wia-wp-config.bak "$WPCONF"
+              rm -f /tmp/wia-wp-config.bak
+            fi
             {
               printf '%s\n' "FAUST_SECRET_KEY=${FAUST_SECRET_KEY}"
               printf '%s\n' "NEXT_PUBLIC_WORDPRESS_URL=${NEXT_PUBLIC_WORDPRESS_URL}"

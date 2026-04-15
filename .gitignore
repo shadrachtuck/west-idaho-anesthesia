@@ -18,6 +18,8 @@ frontend/*.tsbuildinfo
 
 # WordPress local / sensitive (adjust if you intentionally version these)
 app/sql/*.sql
+# Never commit real DB credentials — deploy overwrites tracked copies on the server
+app/public/wp-config.php
 
 # Editor
 .idea/
