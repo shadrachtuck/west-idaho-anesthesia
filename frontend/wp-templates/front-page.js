@@ -142,6 +142,7 @@ export default function Component(props) {
   const phone = w.contactPhone || F.contactPhone;
   const email = w.contactEmail || F.contactEmail;
   const telHref = telHrefFromPhone(phone) || "+12084880066";
+  const billPayHref = w.onlineBillPayUrl?.trim() || "";
 
   return (
     <>
@@ -178,7 +179,17 @@ export default function Component(props) {
                       asChild
                       className="rounded-md px-8 w-full sm:w-auto"
                     >
-                      <Link href="/online-bill-pay">Online Bill Pay</Link>
+                      {billPayHref ? (
+                        <a
+                          href={billPayHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Online Bill Pay
+                        </a>
+                      ) : (
+                        <Link href="/online-bill-pay">Online Bill Pay</Link>
+                      )}
                     </Button>
                   </div>
                 </motion.div>
@@ -216,7 +227,17 @@ export default function Component(props) {
                     asChild
                     className="rounded-md px-8 w-full sm:w-auto"
                   >
-                    <Link href="/online-bill-pay">Online Bill Pay</Link>
+                    {billPayHref ? (
+                      <a
+                        href={billPayHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Online Bill Pay
+                      </a>
+                    ) : (
+                      <Link href="/online-bill-pay">Online Bill Pay</Link>
+                    )}
                   </Button>
                 </div>
               </motion.div>

@@ -26,6 +26,7 @@ export const WiaHomeFieldsFragment = gql`
       storyCtaParagraph
       onlineBillPayHeading
       onlineBillPayDescription
+      onlineBillPayUrl
       missionHeading
       missionBody
       missionTagline

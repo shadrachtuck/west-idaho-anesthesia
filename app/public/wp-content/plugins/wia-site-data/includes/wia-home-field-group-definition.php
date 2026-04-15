@@ -238,6 +238,15 @@ function wia_site_data_get_home_fields() {
 			'show_in_graphql' => true,
 		),
 		array(
+			'key'                => 'field_wia_online_bill_pay_url',
+			'label'              => 'Online bill pay — payment URL',
+			'name'               => 'online_bill_pay_url',
+			'type'               => 'url',
+			'instructions'       => 'Secure bill-pay portal from your billing vendor. Used on the Online Bill Pay page and for the homepage “Online Bill Pay” button (opens in a new tab). Leave empty to send visitors to the /online-bill-pay page only.',
+			'show_in_graphql'    => true,
+			'graphql_field_name' => 'onlineBillPayUrl',
+		),
+		array(
 			'key'           => 'field_wia_mission_heading',
 			'label'         => 'Mission — heading',
 			'name'          => 'mission_heading',

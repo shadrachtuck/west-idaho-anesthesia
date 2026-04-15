@@ -3,6 +3,7 @@ import { getNextServerSideProps } from '@faustwp/core';
 import * as MENUS from '../constants/menus';
 import { BlogInfoFragment } from '../fragments/GeneralSettings';
 import { NavigationMenuItemFragment } from '../fragments/MenuAndImage';
+import { WiaHomeFieldsFragment } from '../fragments/WiaHomeFields';
 import { SEO } from '../components/SEO';
 import SiteLayout from '../components/site/SiteLayout';
 import { motion } from 'framer-motion';
@@ -13,6 +14,7 @@ export default function OnlineBillPayPage(props) {
   const data = props?.data;
   const { title: siteTitle, description: siteDescription } =
     data?.generalSettings ?? {};
+  const payUrl = data?.homeNode?.wiaHomeFields?.onlineBillPayUrl?.trim() || '';
 
   return (
     <>
@@ -39,15 +41,18 @@ export default function OnlineBillPayPage(props) {
                   (208) 488-0066
                 </a>
               </p>
-              <div className="rounded-[10px] border border-dashed border-wia-blue/40 bg-wia-cream/50 p-6 mb-6">
-                <p className="text-sm text-gray-600 font-sans text-center">
-                  Add your secure bill-pay link in this project (or in WordPress) when your practice management or
-                  billing partner provides the URL.
-                </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                {payUrl ? (
+                  <Button asChild className="rounded-[10px] px-6">
+                    <a href={payUrl} target="_blank" rel="noopener noreferrer">
+                      Pay online
+                    </a>
+                  </Button>
+                ) : null}
+                <Button variant="outline" asChild className="rounded-[10px] px-6">
+                  <Link href="/contact">Billing questions? Contact us</Link>
+                </Button>
               </div>
-              <Button variant="outline" asChild className="rounded-[10px] px-6">
-                <Link href="/contact">Billing questions? Contact us</Link>
-              </Button>
             </motion.div>
           </div>
         </div>
@@ -59,6 +64,7 @@ export default function OnlineBillPayPage(props) {
 OnlineBillPayPage.query = gql`
   ${BlogInfoFragment}
   ${NavigationMenuItemFragment}
+  ${WiaHomeFieldsFragment}
   query GetOnlineBillPayPage(
     $headerLocation: MenuLocationEnum
     $footerLocation: MenuLocationEnum
@@ -74,6 +80,12 @@ OnlineBillPayPage.query = gql`
     footerMenuItems: menuItems(where: { location: $footerLocation }) {
       nodes {
         ...NavigationMenuItemFragment
+      }
+    }
+    homeNode: nodeByUri(uri: "/") {
+      __typename
+      ... on Page {
+        ...WiaHomeFields
       }
     }
   }

@@ -11,7 +11,7 @@ export default function TeamProviderGrid({ rows }) {
     return null;
   }
   return (
-    <ul className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-0 list-none p-0 m-0">
+    <ul className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0 m-0">
       {rows.map((row, i) => {
         const src = row.image?.sourceUrl;
         const alt =

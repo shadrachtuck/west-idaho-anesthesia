@@ -36,11 +36,6 @@ export default function ServicesPage(props) {
                 <p className="text-wia-blue font-display text-xl md:text-2xl">
                   Our Mission is Excellence in Customer Service!
                 </p>
-                <p>
-                  West Idaho Anesthesia provides comprehensive anesthesia services across our partner facilities,
-                  including general anesthesia, regional anesthesia, and perioperative consultation. Content for this
-                  page can be expanded in WordPress or here as your service lines are finalized.
-                </p>
               </div>
             </motion.div>
           </div>
