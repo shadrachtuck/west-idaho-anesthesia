@@ -157,7 +157,7 @@ export default function ContactPage(props) {
 
                     <Button
                       type="submit"
-                      className="w-full px-8 py-6 text-lg rounded-full"
+                      className="w-full px-8 py-6 text-lg rounded-[10px]"
                     >
                       <Send className="w-5 h-5 mr-2 inline" />
                       Send Message
@@ -194,7 +194,7 @@ export default function ContactPage(props) {
                         });
                       }}
                       variant="outline"
-                      className="border-gray-300 text-gray-900 hover:bg-gray-50 rounded-full"
+                      className="border-gray-300 text-gray-900 hover:bg-gray-50 rounded-[10px]"
                     >
                       Send Another Message
                     </Button>

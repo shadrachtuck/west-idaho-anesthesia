@@ -169,7 +169,7 @@ export default function Component(props) {
                     <Button
                       size="lg"
                       asChild
-                      className="rounded-md px-8 w-full sm:w-auto font-semibold"
+                      className="rounded-[10px] px-8 w-full sm:w-auto font-semibold"
                     >
                       <Link href="/contact">Contact Us</Link>
                     </Button>
@@ -177,7 +177,7 @@ export default function Component(props) {
                       size="lg"
                       variant="outline"
                       asChild
-                      className="rounded-md px-8 w-full sm:w-auto"
+                      className="rounded-[10px] px-8 w-full sm:w-auto"
                     >
                       {billPayHref ? (
                         <a
@@ -217,7 +217,7 @@ export default function Component(props) {
                   <Button
                     size="lg"
                     asChild
-                    className="rounded-md px-8 w-full sm:w-auto font-semibold"
+                    className="rounded-[10px] px-8 w-full sm:w-auto font-semibold"
                   >
                     <Link href="/contact">Contact Us</Link>
                   </Button>
@@ -225,7 +225,7 @@ export default function Component(props) {
                     size="lg"
                     variant="outline"
                     asChild
-                    className="rounded-md px-8 w-full sm:w-auto"
+                    className="rounded-[10px] px-8 w-full sm:w-auto"
                   >
                     {billPayHref ? (
                       <a
